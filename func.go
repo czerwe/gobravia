@@ -142,6 +142,23 @@ func (tv *BraviaTV) SearchCode(code string) (string, bool) {
 	return code, ok
 }
 
+func (tv *BraviaTV) PrintCodes() {
+
+	var count int32
+
+	count = 0
+	for k, _ := range tv.Commands {
+		count++
+
+		if count%3 == 0 {
+			fmt.Printf("\n")
+		}
+
+		fmt.Printf("%-23v", k)
+	}
+	fmt.Printf("\n")
+}
+
 func (tv *BraviaTV) SendAlias(alias string) bool {
 	code, ok := tv.SearchCode(alias)
 	if ok {
