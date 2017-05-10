@@ -37,7 +37,7 @@ func init() {
 }
 
 func TestGetBravia(t *testing.T) {
-	brv := GetBravia("mytv.local", "0001")
+	brv := GetBravia("mytv.local", "0001", "FC:FF:FF:F2:FF:FF")
 
 	if brv.Address != "mytv.local" {
 		t.Log("Did not stored Address correct")
@@ -59,7 +59,7 @@ func TestGetCommands(t *testing.T) {
 		BodyString(testcommand)
 		// JSON(map[string]string{"foo": "bar"})
 
-	b := *GetBravia("blub", "0000")
+	b := *GetBravia("blub", "0000", "FC:FF:FF:F2:FF:FF")
 	b.GetCommands()
 
 	st.Expect(t, b.Commands["poweroff"], "AAAAAQAAAAEAAAAvAw==")
@@ -80,7 +80,7 @@ func TestSearchCommands(t *testing.T) {
 		BodyString(testcommand)
 		// JSON(map[string]string{"foo": "bar"})
 
-	b := *GetBravia("blub", "0000")
+	b := *GetBravia("blub", "0000", "FC:FF:FF:F2:FF:FF")
 	b.GetCommands()
 
 	code, ok := b.SearchCode("poweroff")
