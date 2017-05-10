@@ -3,6 +3,7 @@ package gobravia
 import (
 	"encoding/json"
 	"encoding/xml"
+	"github.com/sabhiram/go-wol"
 )
 
 type Tv interface {
@@ -11,10 +12,12 @@ type Tv interface {
 }
 
 type BraviaTV struct {
-	Address  string
-	Envelope Envelope
-	Pin      string
-	Commands map[string]string
+	Address   string
+	Envelope  Envelope
+	Pin       string
+	Mac       string
+	Wolpacket *wol.MagicPacket
+	Commands  map[string]string
 }
 
 type Envelope struct {

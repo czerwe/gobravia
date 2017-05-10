@@ -6,13 +6,19 @@ import (
 	"encoding/xml"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
+	"github.com/sabhiram/go-wol"
 	"io/ioutil"
 	"net/http"
 	"strings"
 )
 
-func GetBravia(address string, pin string) *BraviaTV {
-	retVal := BraviaTV{Address: address, Pin: pin}
+func GetBravia(address string, pin string, mac string) *BraviaTV {
+	wolpacket, err := wol.NewMagicPacket(mac)
+
+	if err != nil {
+		fmt.Println(err)
+	}
+	retVal := BraviaTV{Address: address, Pin: pin, Mac: mac, Wolpacket: wolpacket}
 
 	return &retVal
 }
@@ -34,6 +40,10 @@ type ComGet struct {
 	Method  string   `json:"method"`
 	Version string   `json:"version"`
 	Params  []string `json:"params"`
+}
+
+func (tv *BraviaTV) Poweron() {
+	wol.SendMagicPacket(tv.Mac, "", "")
 }
 
 func (tv *BraviaTV) GetCommands() {
