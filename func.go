@@ -6,20 +6,15 @@ import (
 	"encoding/xml"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
-	"github.com/sabhiram/go-wol"
+	wol "github.com/ghthor/gowol"
 	"io/ioutil"
 	"net/http"
 	"strings"
+	"time"
 )
 
 func GetBravia(address string, pin string, mac string) *BraviaTV {
-	wolpacket, err := wol.NewMagicPacket(mac)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-	retVal := BraviaTV{Address: address, Pin: pin, Mac: mac, Wolpacket: wolpacket}
-
+	retVal := BraviaTV{Address: address, Pin: pin, Mac: mac}
 	return &retVal
 }
 
@@ -42,14 +37,16 @@ type ComGet struct {
 	Params  []string `json:"params"`
 }
 
-func (tv *BraviaTV) Poweron() {
-	wol.SendMagicPacket(tv.Mac, "", "")
+func (tv *BraviaTV) Poweron(bcast string) {
+	wol.MagicWake(tv.Mac, bcast)
 }
 
-func (tv *BraviaTV) GetCommands() {
+func (tv *BraviaTV) GetCommands() bool {
 	commands := make(map[string]string)
 
-	client := &http.Client{}
+	timeout := time.Duration(5 * time.Second)
+
+	client := &http.Client{Timeout: timeout}
 	url := fmt.Sprintf("http://%v/sony/system", tv.Address)
 	// url := fmt.Sprintf("https://czerwe.no-ip.org/testserver/bravia")
 
@@ -64,7 +61,7 @@ func (tv *BraviaTV) GetCommands() {
 
 	if err != nil {
 		log.Error(err)
-		return
+		return false
 	}
 
 	jsonreader := bytes.NewReader(bytestring)
@@ -73,16 +70,19 @@ func (tv *BraviaTV) GetCommands() {
 
 	if err != nil {
 		log.Error(err)
-		return
+		return false
 	}
-
 	req.Header.Add("Content-Type", "application/json")
 
 	resp, err := client.Do(req)
 	if err != nil {
+		tv.Connected = false
 		log.Error(err)
-		return
+		return false
+	} else {
+		tv.Connected = true
 	}
+
 	defer resp.Body.Close()
 
 	body, _ := ioutil.ReadAll(resp.Body)
@@ -92,18 +92,21 @@ func (tv *BraviaTV) GetCommands() {
 	err = json.Unmarshal(body, &coderesp)
 	if err != nil {
 		log.Error("Cannot unmarshal the codelist")
+		return false
 	}
 
 	coderesp.Header = &Header{}
 	err = json.Unmarshal(coderesp.RawResult[0], &coderesp.Header)
 	if err != nil {
 		log.Error("Cannot unmarshal the header")
+		return false
 	}
 
 	coderesp.Values = []*Value{}
 	json.Unmarshal(coderesp.RawResult[1], &coderesp.Values)
 	if err != nil {
 		log.Error("Cannot unmarshal the values")
+		return false
 	}
 
 	for _, k := range coderesp.Values {
@@ -113,6 +116,7 @@ func (tv *BraviaTV) GetCommands() {
 	}
 
 	tv.Commands = commands
+	return true
 }
 
 func (tv *BraviaTV) SendCommand(code string) {
@@ -126,7 +130,7 @@ func (tv *BraviaTV) SendCommand(code string) {
 	req, err := http.NewRequest("POST", url, jsonreader)
 
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		return
 	}
 
@@ -136,14 +140,14 @@ func (tv *BraviaTV) SendCommand(code string) {
 
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		return
 	}
 	defer resp.Body.Close()
 
-	body, _ := ioutil.ReadAll(resp.Body)
+	// body, _ := ioutil.ReadAll(resp.Body)
 
-	fmt.Println(string(body))
+	// fmt.Println(string(body))
 
 }
 
