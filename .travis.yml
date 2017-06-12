@@ -11,4 +11,4 @@ install:
   - go get -u gopkg.in/h2non/gock.v1 
   - go get github.com/nbio/st
   - go get github.com/Sirupsen/logrus
-  - go get github.com/sabhiram/go-wol
+  - go get github.com/ghthor/gowol
